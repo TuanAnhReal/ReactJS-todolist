@@ -1,12 +1,12 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import TodoItem from './TodoItem';
 
-class TodoList extends React.Component {
-    render() {
+export default function TodoList() {
+    const tasks = useSelector((state) => state.todoState.tasks);
         return (
             <ul className="list-group">
-                {this.props.tasks.map((task, index) => (
+                {tasks.map((task, index) => (
                     <TodoItem
                         key={task.id}
                         index={index}
@@ -16,12 +16,3 @@ class TodoList extends React.Component {
             </ul>
         );
     }
-}
-
-const mapStateToProps = (state) => {
-    return {
-        tasks: state.todoState.tasks
-    }
-}
-
-export default connect(mapStateToProps)(TodoList);

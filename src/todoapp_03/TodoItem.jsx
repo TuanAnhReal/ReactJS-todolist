@@ -1,89 +1,70 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { actionDeleteTodo, actionEditTodo, actionSaveTodo } from './redux/reducers/todoSlice';
 
-class TodoItem extends React.Component {
-    state = {
-        noiDung: ''
+export default function TodoItem(props) {
+
+    const [noiDung, setNoiDung] = useState('');
+
+    const dispatch = useDispatch();
+
+    const editItem = useSelector((state) => state.todoState.editItem);
+
+    const handleChangeText = (e) => {
+       setNoiDung(e.target.value);
+    }
+    
+    const handleDelTask = (id) => {
+        axios.delete(`http://localhost:5000/tasks/${id}`).then(() => dispatch(actionDeleteTodo(id)));
     }
 
-    handleChangeText = (e) => {
-        this.setState({ noiDung: e.target.value });
-    }
-    // vì xóa chỉ cần id nên không truyền nguyên mảng task, chỉ truyền id
-    handleDelTask = (id) => {
-        axios.delete(`http://localhost:5000/tasks/${id}`).then(() => this.props.handleDelTask(id));
-    }
-
-    handleEditTask = (task) => {
+    const handleEditTask = (task) => {
         if (task) {
-            this.setState({ noiDung: task.name });
+            setNoiDung(task.name);
         } else {
-            this.setState({ noiDung: '' });
+            setNoiDung('');
         }
-        this.props.handleEditTask(task);
+        dispatch(actionEditTodo(task));
     }
 
-    handleSaveTask = (task) => {
-        const updateTask = { ...task, name: this.state.noiDung };
-        axios.put(`http://localhost:5000/tasks/${task.id}`, updateTask).then((res) => this.props.handleSaveTask(res.data));
+    const handleSaveTask = (task) => {
+        const updateTask = { ...task, name: noiDung };
+        axios.put(`http://localhost:5000/tasks/${task.id}`, updateTask).then((res) => dispatch(actionSaveTodo(res.data)));
     }
 
-    render() {
-        let isEmptyTodoItem = Object.keys(this.props.editItem) === 0;
+        let isEmptyTodoItem = Object.keys(editItem) === 0;
         return (
             <li className="list-group-item d-flex justify-content-between align-items-center">
                 {
-                    !isEmptyTodoItem && this.props.editItem.id === this.props.task.id ?
+                    !isEmptyTodoItem && editItem.id === props.task.id ?
                         <>
                             <input
                                 className="form-control w-auto flex-grow-1"
                                 type="text"
-                                value={this.state.noiDung}
-                                onChange={(e) => this.handleChangeText(e)} autoFocus />
+                                value={noiDung}
+                                onChange={(e) => handleChangeText(e)} autoFocus />
                             <div>
                                 <button
                                     className="btn btn-sm btn-warning me-2"
-                                    onClick={() => this.handleSaveTask(this.props.task)}>Lưu</button>
+                                    onClick={() => handleSaveTask(props.task)}>Lưu</button>
                                 <button
                                     className="btn btn-sm btn-danger"
-                                    onClick={() => this.handleEditTask({})}>Không</button>
+                                    onClick={() => handleEditTask({})}>Không</button>
                             </div>
                         </>
                         :
                         <>
-                            <span>{this.props.index + 1}. {this.props.task.name}</span>
+                            <span>{props.index + 1}. {props.task.name}</span>
                             <div>
                                 <button
                                     className="btn btn-sm btn-warning me-2"
-                                    onClick={() => this.handleEditTask(this.props.task)}>Sửa</button>
+                                    onClick={() => handleEditTask(props.task)}>Sửa</button>
                                 <button className="btn btn-sm btn-danger"
-                                    onClick={() => this.handleDelTask(this.props.task.id)}>Xóa</button>
+                                    onClick={() => handleDelTask(props.task.id)}>Xóa</button>
                             </div>
                         </>
                 }
             </li>
         );
     }
-}
-
-const mapStateToProps = (state) => {
-    return {
-        editItem: state.todoState.editItem,
-    }
-}
-
-const mapDispatchToProps = (dispatch) => ({
-    handleDelTask: (item) => {
-        dispatch(actionDeleteTodo(item));
-    },
-    handleEditTask: (item) => {
-        dispatch(actionEditTodo(item));
-    },
-    handleSaveTask: (item) => {
-        dispatch(actionSaveTodo(item));
-    },
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(TodoItem);
